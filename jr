@@ -1,0 +1,77 @@
+#!/bin/bash
+# Journal by Miles Pomeroy
+# v1.0 2010-01-06
+#
+##Setup##
+# Change $DIR to the directory you want to store your journal entries in.
+# Adjust $CMD to call your editor of choice.
+# Adjust $EXT to your file extension of choice.
+#
+##Usage##
+# Run the script, `jr`, and it will create a file in the directory you 
+# choose with today's date. Then it will open that file in your editor.
+# If you provide a date, `jr 2009-10-21`, it will open that file from 
+# from your journal. If it doesn't exist it was ask if you want to create
+# it.
+#
+
+## Variables 
+
+DIR="/Users/pants/Documents/journal/" # directory to place files
+#DIR="/Users/macglab/LabData/Miles/labbook/" # for my work computer
+#DIR="test/" # test directory
+
+CMD='mate -l 1000' # use TextMate as editor
+#CMD='vim +' # use vim
+
+EXT='.md' # file extension
+
+## Functions
+
+# make the file with the date
+makeIt ()
+{
+    echo -e "\n"$pretty_date"\n-----\n" >> $filename
+}
+
+## Code
+
+if [ -z $1 ] # if there is no argument
+then
+	short_date=$(date +"%Y-%m-%d") # date format for filename
+	pretty_date=$(date +"%A, %B %e, %Y") # date format for header
+	filename=$DIR$short_date$EXT
+
+    if [ -f $filename ] # if file already exists
+    then # open it
+        $CMD $filename
+    else # make it and open it
+        makeIt
+        $CMD $filename
+    fi
+else # there is an argument
+    if [[ $1 =~ .*-.*-.* ]] # basic validation of date format
+    then
+        short_date=$1
+        pretty_date=$(date -j -f "%Y-%m-%d" $1 "+%A, %B %e, %Y")
+		filename=$DIR$short_date$EXT
+
+        if [ -f $filename ] # if file already exists
+        then # open it
+            $CMD $filename
+        else # ask to make it
+            echo "Entry does not exist."
+            echo "Do you want to create an entry for $1? (Y|n)"
+            read input
+
+            if [[ $input != "n" ]] # yes they want it created, default
+            then # make it and open it
+                makeIt
+                $CMD $filename
+            fi
+        fi
+    else # wrong date format
+        echo "Format the date thus: YYYY-MM-DD"
+        exit 1
+    fi
+fi
